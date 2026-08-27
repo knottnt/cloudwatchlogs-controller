@@ -16,6 +16,8 @@
 package resource_policy
 
 import (
+	"fmt"
+
 	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
 	ackerrors "github.com/aws-controllers-k8s/runtime/pkg/errors"
 	acktypes "github.com/aws-controllers-k8s/runtime/pkg/types"
@@ -101,6 +103,16 @@ func (r *resource) SetIdentifiers(identifier *ackv1alpha1.AWSIdentifiers) error 
 
 // PopulateResourceFromAnnotation populates the fields passed from adoption annotation
 func (r *resource) PopulateResourceFromAnnotation(fields map[string]string) error {
+	exclusiveIdentifierCount := 0
+	if _, ok := fields["policyName"]; ok {
+		exclusiveIdentifierCount++
+	}
+	if _, ok := fields["resourceARN"]; ok {
+		exclusiveIdentifierCount++
+	}
+	if exclusiveIdentifierCount != 1 {
+		return ackerrors.NewTerminalError(fmt.Errorf("adoption requires exactly one of: policyName, resourceARN"))
+	}
 	primaryKey, ok := fields["policyName"]
 	if ok {
 		r.ko.Spec.PolicyName = &primaryKey

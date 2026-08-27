@@ -51,13 +51,11 @@ operations:
     resource_name: ResourcePolicy
     operation_type:
       - List
-    # DescribeResourcePolicies takes no required input fields, so the generated
-    # requiredFieldsMissingFromReadManyInput always returns false. That makes an
-    # empty resource (no PolicyName, no ResourceARN) match the first policy the
-    # API returns, causing an arbitrary account-scoped policy to be adopted.
-    # This custom method treats the read input as incomplete unless at least one
-    # identifier is supplied, so sdkFind returns NotFound instead.
-    custom_check_required_fields_missing_method: customCheckRequiredFieldsMissing
+    # DescribeResourcePolicies takes no required input fields. The
+    # mutually_exclusive_identifiers config on ResourcePolicy drives the
+    # generated requiredFieldsMissingFromReadManyInput so it treats the read
+    # input as incomplete (and sdkFind returns NotFound) unless at least one of
+    # PolicyName or ResourceARN is set, instead of matching an arbitrary policy.
 resources:
   LogGroup:
     exceptions:
@@ -128,9 +126,13 @@ resources:
     # ResourcePolicy has no single mandatory identifier: account-scoped policies
     # are keyed by PolicyName while resource-scoped policies are keyed by
     # ResourceARN. PolicyName is designated the primary key so identifier code
-    # still generates, and is_primary_key_optional makes adoption populate
-    # whichever identifier fields the user supplies without requiring PolicyName.
-    is_primary_key_optional: true
+    # still generates, and mutually_exclusive_identifiers makes adoption populate
+    # whichever identifier the user supplies while requiring that exactly one of
+    # them is present, so an empty or misspelled annotation fails with a terminal
+    # error instead of adopting an arbitrary policy.
+    mutually_exclusive_identifiers:
+      - PolicyName
+      - ResourceArn
     exceptions:
       terminal_codes:
         - InvalidParameterException
