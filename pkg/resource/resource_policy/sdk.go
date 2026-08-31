@@ -150,7 +150,7 @@ func (rm *resourceManager) sdkFind(
 func (rm *resourceManager) requiredFieldsMissingFromReadManyInput(
 	r *resource,
 ) bool {
-	return r.ko.Spec.PolicyName == nil && r.ko.Spec.ResourceARN == nil
+	return (r.ko.Spec.PolicyName == nil && r.ko.Spec.ResourceARN == nil)
 
 }
 
